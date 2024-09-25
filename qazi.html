@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, select, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Attendance Management System</h1>
+    <div class="container">
+        <label for="studentName">Student Name:</label>
+        <input type="text" id="studentName">
+
+        <label for="fatherName">Father's Name:</label>
+        <input type="text" id="fatherName">
+
+        <label for="rollNo">Roll Number:</label>
+        <input type="text" id="rollNo">
+
+        <label for="finePerAbsent">Fine Per Absent (PKR):</label>
+        <input type="number" id="finePerAbsent" value="0">
+
+        <button onclick="addStudent()">Add Student</button>
+
+        <hr>
+
+        <h3>Mark Attendance</h3>
+        <label for="rollNoToUpdate">Roll Number:</label>
+        <input type="text" id="rollNoToUpdate">
+
+        <label for="dateToMark">Date (1-31):</label>
+        <input type="number" id="dateToMark" min="1" max="31">
+
+        <label for="attendanceStatus">Attendance (P for Present, A for Absent):</label>
+        <input type="text" id="attendanceStatus" maxlength="1">
+
+        <button onclick="markAttendance()">Mark Attendance</button>
+
+        <hr>
+
+        <h3>View Attendance</h3>
+        <button onclick="viewAttendance()">View All Attendance</button>
+        <table id="attendanceTable" class="hidden">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Father's Name</th>
+                    <th>Roll No</th>
+                    <th>Fine</th>
+                    <th>Stuck Off</th>
+                    <th colspan="31">Dates</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const DATE_COLUMNS = 31;
+        let students = [];
+
+        function addStudent() {
+            const studentName = document.getElementById('studentName').value;
+            const fatherName = document.getElementById('fatherName').value;
+            const rollNo = document.getElementById('rollNo').value;
+            const finePerAbsent = document.getElementById('finePerAbsent').value;
+
+            const newStudent = {
+                studentName,
+                fatherName,
+                rollNo,
+                finePerAbsent,
+                attendance: Array(DATE_COLUMNS).fill('0'),
+                fine: 0,
+                stuckOff: 'No'
+            };
+
+            students.push(newStudent);
+            alert('Student added successfully!');
+            clearInputs();
+        }
+
+        function clearInputs() {
+            document.getElementById('studentName').value = '';
+            document.getElementById('fatherName').value = '';
+            document.getElementById('rollNo').value = '';
+            document.getElementById('finePerAbsent').value = '0';
+        }
+
+        function markAttendance() {
+            const rollNo = document.getElementById('rollNoToUpdate').value;
+            const date = parseInt(document.getElementById('dateToMark').value);
+            const status = document.getElementById('attendanceStatus').value.toUpperCase();
+
+            if (status !== 'P' && status !== 'A') {
+                alert('Invalid status. Please enter "P" for Present or "A" for Absent.');
+                return;
+            }
+
+            const student = students.find(st => st.rollNo === rollNo);
+
+            if (student && date >= 1 && date <= 31) {
+                student.attendance[date - 1] = status;
+                updateFineAndStuckOff(student);
+                alert('Attendance marked successfully!');
+            } else {
+                alert('Invalid Roll Number or Date.');
+            }
+        }
+
+        function updateFineAndStuckOff(student) {
+            const absences = student.attendance.filter(att => att === 'A').length;
+            student.fine = absences * student.finePerAbsent;
+            student.stuckOff = absences >= 3 ? 'Yes' : 'No';
+        }
+
+        function viewAttendance() {
+            const attendanceTable = document.getElementById('attendanceTable');
+            const attendanceBody = document.getElementById('attendanceBody');
+
+            attendanceBody.innerHTML = ''; // Clear existing table content
+
+            students.forEach(student => {
+                const row = document.createElement('tr');
+
+                // Create table cells
+                row.innerHTML = `
+                    <td>${student.studentName}</td>
+                    <td>${student.fatherName}</td>
+                    <td>${student.rollNo}</td>
+                    <td>${student.fine}</td>
+                    <td>${student.stuckOff}</td>
+                `;
+
+                // Add attendance cells
+                for (let i = 0; i < DATE_COLUMNS; i++) {
+                    const cell = document.createElement('td');
+                    cell.textContent = student.attendance[i];
+                    row.appendChild(cell);
+                }
+
+                attendanceBody.appendChild(row);
+            });
+
+            attendanceTable.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
